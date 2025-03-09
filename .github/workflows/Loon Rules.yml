@@ -1,0 +1,92 @@
+name: Update Loon Rules Directory
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'  # 每12小时运行一次
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        token: ${{ secrets.PAT }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests PyYAML
+        
+    - name: Create update script
+      run: |
+        cat > update_directory.py << 'EOF'
+        import requests
+        import yaml
+        from datetime import datetime
+        import os
+
+        def update_directories():
+            api_url = "https://api.github.com/repos/rdone4425/ios_rule_script/contents/rule/Loon"
+            headers = {
+                'Accept': 'application/vnd.github.v3+json',
+            }
+            
+            try:
+                response = requests.get(api_url, headers=headers)
+                response.raise_for_status()
+                contents = response.json()
+                
+                directories = [item['name'] for item in contents if item['type'] == 'dir']
+                directories.sort()
+                
+                # 创建yuming-ip目录
+                os.makedirs('yuming-ip', exist_ok=True)
+                
+                # 写入txt文件
+                with open('yuming-ip/loon.txt', 'w', encoding='utf-8') as f:
+                    for directory in directories:
+                        f.write(f"{directory}\n")
+                
+                # 写入yml文件
+                data = {
+                    'metadata': {
+                        'updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'source': 'rdone4425/ios_rule_script',
+                        'total_directories': len(directories)
+                    },
+                    'directories': directories
+                }
+                
+                with open('yuming-ip/loon.yml', 'w', encoding='utf-8') as f:
+                    yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
+                
+                return True
+                
+            except Exception as e:
+                print(f"Error: {e}")
+                return False
+        
+        if __name__ == "__main__":
+            success = update_directories()
+            exit(0 if success else 1)
+        EOF
+        
+    - name: Run update script
+      run: python update_directory.py
+        
+    - name: Commit and push if changed
+      run: |
+        git config --local user.name "GitHub Action"
+        git config --local user.email "action@github.com"
+        git add yuming-ip/
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update Loon rules directory $(date '+%Y-%m-%d %H:%M:%S')" && git push) 
