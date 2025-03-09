@@ -8,7 +8,25 @@ on:
         type: string
       
 jobs:
+  verify-source:
+    runs-on: ubuntu-latest
+    outputs:
+      is_allowed: ${{ steps.check-source.outputs.is_allowed }}
+    steps:
+      - name: Check request source
+        id: check-source
+        run: |
+          USER_AGENT="${{ github.event.client_payload.client_meta.user_agent }}"
+          if [[ "$USER_AGENT" == "CloudflareWorker" ]]; then
+            echo "is_allowed=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_allowed=false" >> $GITHUB_OUTPUT
+            echo "::error::此工作流只能由 Cloudflare Worker 触发"
+          fi
+
   check-last-run:
+    needs: verify-source
+    if: needs.verify-source.outputs.is_allowed == 'true'
     runs-on: ubuntu-latest
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
