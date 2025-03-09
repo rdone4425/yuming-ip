@@ -7,7 +7,7 @@ on:
 
 jobs:
   update-geoip:
-    uses: ./.github/workflows/update-geoip.yml  # 修改为正确的文件名
+    uses: ./.github/workflows/GeoIP3.yml  # 修改为正确的文件名
     secrets: inherit  # 继承secrets
 
   dns-lookup:
@@ -224,6 +224,7 @@ jobs:
             try:
                 reader = geoip2.database.Reader('ios_rule_script/GeoLite2-Country.mmdb')
                 
+                # 修改为正确的本地路径
                 with open('ios_rule_script/merged_domains.list', 'r', encoding='utf-8') as f:
                     lines = f.readlines()
                 
