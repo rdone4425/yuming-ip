@@ -15,10 +15,27 @@ jobs:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      - name: Check recent requests
-        id: check_requests
+      - name: Validate country code
+        id: validate
         run: |
           COUNTRY="${{ github.event.client_payload.country }}"
+          COUNTRY_LOWER=$(echo "$COUNTRY" | tr '[:upper:]' '[:lower:]')
+          
+          # 检查 geoip_info.json 中是否存在该国家代码
+          if jq -e --arg code "$COUNTRY_LOWER" '.[] | select(.代码 == $code)' geoip-info/geoip_info.json > /dev/null; then
+            echo "valid=true" >> $GITHUB_OUTPUT
+            echo "country=$COUNTRY_LOWER" >> $GITHUB_OUTPUT
+          else
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "Invalid country code: $COUNTRY"
+            exit 1
+          fi
+
+      - name: Check recent requests
+        if: steps.validate.outputs.valid == 'true'
+        id: check_requests
+        run: |
+          COUNTRY="${{ steps.validate.outputs.country }}"
           REQUESTS_FILE="geoip-info/requests.json"
           
           # 确保目录存在
@@ -32,7 +49,7 @@ jobs:
           fi
           
           # 检查最近24小时内是否已经生成过
-          LAST_REQUEST=$(jq -r --arg country "$COUNTRY" '.[] | select(.country == $country) | .updated_at' "$REQUESTS_FILE" | head -n1)
+          LAST_REQUEST=$(jq -r --arg country "$COUNTRY" '.[] | select(.国家 == $country) | .更新时间' "$REQUESTS_FILE" | head -n1)
           
           if [ ! -z "$LAST_REQUEST" ]; then
             # 计算时间差
@@ -43,8 +60,6 @@ jobs:
             if [ $HOURS_DIFF -lt 24 ]; then
               echo "最近24小时内已经生成过 $COUNTRY 的IP列表，上次生成时间: $LAST_REQUEST"
               echo "need_update=false" >> $GITHUB_OUTPUT
-              
-              # 不添加新记录，保持原有记录
               exit 0
             fi
           fi
