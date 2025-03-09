@@ -37,11 +37,12 @@ jobs:
               
               # 获取现有文件的URL
               IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
+              IPV6_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv6.txt"
               
               # 如果回调URL在环境变量中存在，则通知Worker
               if [ ! -z "${{ github.event.client_payload.callback_url }}" ]; then
                 echo "通知Worker使用现有URL"
-                CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&url=${IPV4_URL}"
+                CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&ipv4_url=${IPV4_URL}&ipv6_url=${IPV6_URL}"
                 echo "调用回调URL: $CALLBACK_URL"
                 RESPONSE=$(curl -X GET "$CALLBACK_URL")
                 echo "回调响应: $RESPONSE"
@@ -180,13 +181,14 @@ jobs:
         if: steps.check_generated.outputs.skip != 'true' && steps.commit_push.outputs.changes == 'true'
         run: |
           COUNTRY="${{ github.event.client_payload.country }}"
-          # 构建IPv4文件的URL
+          # 构建IPv4和IPv6文件的URL
           IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
+          IPV6_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv6.txt"
           
           # 通知Worker
           if [ ! -z "${{ github.event.client_payload.callback_url }}" ]; then
             echo "通知Worker使用新生成的URL"
-            CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&url=${IPV4_URL}"
+            CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&ipv4_url=${IPV4_URL}&ipv6_url=${IPV6_URL}"
             echo "调用回调URL: $CALLBACK_URL"
             RESPONSE=$(curl -X GET "$CALLBACK_URL")
             echo "回调响应: $RESPONSE"
