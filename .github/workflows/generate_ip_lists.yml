@@ -46,13 +46,13 @@ jobs:
           fi
 
           # 获取所有24小时内运行成功的国家代码
-          mkdir -p status
+          mkdir -p geoip-info
           gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "/repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/runs" \
             --jq "[.workflow_runs[] | select(.conclusion == \"success\" and (.created_at | fromdateiso8601) >= (now - 86400)) | {country: .inputs.country_code, last_run: .created_at}] | unique_by(.country)" \
-            > status/recent_runs.json
+            > geoip-info/recent_runs.json
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: status
-          path: status/recent_runs.json
+          path: geoip-info/recent_runs.json
 
   process-geoip:
     needs: check-last-run
