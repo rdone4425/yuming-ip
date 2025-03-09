@@ -15,6 +15,40 @@ jobs:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
+      - name: Update request status
+        run: |
+          COUNTRY="${{ github.event.client_payload.country }}"
+          REQUESTS_FILE="ip-lists/requests.json"
+          
+          # 确保目录存在
+          mkdir -p ip-lists
+          
+          # 如果文件不存在，创建一个空的JSON数组
+          if [ ! -f "$REQUESTS_FILE" ]; then
+            echo "[]" > "$REQUESTS_FILE"
+          fi
+          
+          # 添加新的请求记录
+          TEMP_FILE=$(mktemp)
+          jq --arg country "$COUNTRY" \
+             --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+             --arg run_id "${{ github.run_id }}" \
+          '[{
+            "country": $country,
+            "status": "processing",
+            "created_at": $time,
+            "updated_at": $time,
+            "run_id": $run_id
+          }] + .[0:99]' "$REQUESTS_FILE" > "$TEMP_FILE"
+          mv "$TEMP_FILE" "$REQUESTS_FILE"
+          
+          # 提交更新
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add "$REQUESTS_FILE"
+          git commit -m "Add generation request for $COUNTRY"
+          git push
+
       - name: Check if already generated recently
         id: check_generated
         run: |
@@ -33,21 +67,24 @@ jobs:
             
             if [ $HOURS_DIFF -lt 24 ]; then
               echo "已经在最近24小时内生成过 $COUNTRY 的 IP 列表，上次生成时间: $LAST_GENERATED"
+              
+              # 更新请求状态为跳过
+              jq --arg country "$COUNTRY" \
+                 --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+                 --arg message "24小时内已生成" \
+              '.[0] = if .[0].country == $country then
+                .[0] + {
+                  "status": "skipped",
+                  "updated_at": $time,
+                  "message": $message
+                }
+              else . end' "ip-lists/requests.json" > temp.json && mv temp.json "ip-lists/requests.json"
+              
+              git add "ip-lists/requests.json"
+              git commit -m "Update request status for $COUNTRY (skipped)"
+              git push
+              
               echo "skip=true" >> $GITHUB_OUTPUT
-              
-              # 获取现有文件的URL
-              IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
-              IPV6_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv6.txt"
-              
-              # 如果回调URL在环境变量中存在，则通知Worker
-              if [ ! -z "${{ github.event.client_payload.callback_url }}" ]; then
-                echo "通知Worker使用现有URL"
-                CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&ipv4_url=${IPV4_URL}&ipv6_url=${IPV6_URL}"
-                echo "调用回调URL: $CALLBACK_URL"
-                RESPONSE=$(curl -X GET "$CALLBACK_URL")
-                echo "回调响应: $RESPONSE"
-              fi
-              
               exit 0
             else
               echo "上次生成时间超过24小时，将重新生成"
@@ -78,6 +115,7 @@ jobs:
           import json
           import re
           import ipaddress
+          from datetime import datetime
 
           def is_valid_ip(ip_str):
               try:
@@ -154,7 +192,8 @@ jobs:
               "has_ipv6": bool(ipv6_list),
               "ipv4_count": len(ipv4_list),
               "ipv6_count": len(ipv6_list),
-              "generated_at": "${{ github.event.client_payload.timestamp }}"
+              "generated_at": datetime.now().isoformat(),
+              "status": "completed"
           }
           
           with open(f'ip-lists/{country_code}_metadata.json', 'w') as f:
@@ -193,3 +232,35 @@ jobs:
             RESPONSE=$(curl -X GET "$CALLBACK_URL")
             echo "回调响应: $RESPONSE"
           fi 
+
+      - name: Update final status
+        if: always()
+        run: |
+          COUNTRY="${{ github.event.client_payload.country }}"
+          STATUS="${{ job.status }}"
+          
+          # 根据作业状态设置请求状态
+          if [ "$STATUS" = "success" ]; then
+            REQUEST_STATUS="completed"
+            MESSAGE="生成成功"
+          else
+            REQUEST_STATUS="failed"
+            MESSAGE="生成失败"
+          fi
+          
+          # 更新请求状态
+          jq --arg country "$COUNTRY" \
+             --arg status "$REQUEST_STATUS" \
+             --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+             --arg message "$MESSAGE" \
+          '.[0] = if .[0].country == $country then
+            .[0] + {
+              "status": $status,
+              "updated_at": $time,
+              "message": $message
+            }
+          else . end' "ip-lists/requests.json" > temp.json && mv temp.json "ip-lists/requests.json"
+          
+          git add "ip-lists/requests.json"
+          git commit -m "Update final status for $COUNTRY"
+          git push 
