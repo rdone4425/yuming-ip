@@ -1,4 +1,4 @@
-name: DNS Lookup for Domains
+name: DNS Lookup and GeoIP Update
 
 on:
   schedule:
@@ -6,12 +6,7 @@ on:
   workflow_dispatch:  # 允许手动触发
 
 jobs:
-  update-geoip:
-    uses: ./.github/workflows/GeoIP3.yml  # 修改为正确的文件名
-    secrets: inherit  # 继承secrets
-
   dns-lookup:
-    needs: update-geoip  # 等待 GeoIP 更新完成
     runs-on: ubuntu-latest
     
     steps:
@@ -20,8 +15,13 @@ jobs:
       with:
         token: ${{ secrets.PAT }}
         
+    - name: Download GeoIP database
+      run: |
+        mkdir -p ios_rule_script
+        wget -O ios_rule_script/GeoLite2-Country.mmdb https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb
+        
     - name: Set up Python
-      uses: actions/setup-python@v4  # 更新到 v4
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
         
@@ -29,6 +29,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install dnspython geoip2 requests ipaddress aiodns asyncio
+        
+    - name: Debug file existence
+      run: |
+        ls -la
+        ls -la ios_rule_script/
+        cat ios_rule_script/merged_domains.list | head -5
         
     - name: Create DNS lookup script
       run: |
@@ -318,7 +324,8 @@ jobs:
         git config --local user.email "action@github.com"
         # 先拉取最新的远程更改
         git pull --rebase origin master
+        git add ios_rule_script/GeoLite2-Country.mmdb
         git add ios_rule_script/dns_results_ipv4.txt
         git add ios_rule_script/dns_results_ipv6.txt
         git add ios_rule_script/dns_results_cname.txt
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update DNS lookup results $(date '+%Y-%m-%d %H:%M:%S')" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update DNS lookup results and GeoIP database $(date '+%Y-%m-%d %H:%M:%S')" && git push) 
