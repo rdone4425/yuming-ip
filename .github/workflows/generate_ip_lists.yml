@@ -65,11 +65,11 @@ jobs:
              --arg run_id "${{ github.run_id }}" \
              --arg status "处理中" \
           '([{
-            "country": $country,
-            "status": $status,
-            "created_at": $time,
-            "updated_at": $time,
-            "run_id": $run_id
+            "国家": $country,
+            "状态": $status,
+            "创建时间": $time,
+            "更新时间": $time,
+            "运行ID": $run_id
           }] + .[0:99])' "$REQUESTS_FILE" > "$TEMP_FILE"
           
           if [ $? -eq 0 ]; then
@@ -234,10 +234,10 @@ jobs:
           
           # 根据作业状态设置请求状态
           if [ "$STATUS" = "success" ]; then
-            REQUEST_STATUS="completed"
+            REQUEST_STATUS="已完成"
             MESSAGE="生成成功"
           else
-            REQUEST_STATUS="failed"
+            REQUEST_STATUS="失败"
             MESSAGE="生成失败"
           fi
           
@@ -246,11 +246,11 @@ jobs:
              --arg status "$REQUEST_STATUS" \
              --arg time "$CURRENT_TIME" \
              --arg message "$MESSAGE" \
-          '.[0] = if .[0].country == $country then
+          '.[0] = if .[0].国家 == $country then
             .[0] + {
-              "status": $status,
-              "updated_at": $time,
-              "message": $message
+              "状态": $status,
+              "更新时间": $time,
+              "消息": $message
             }
           else . end' "geoip-info/requests.json" > temp.json && mv temp.json "geoip-info/requests.json"
           
