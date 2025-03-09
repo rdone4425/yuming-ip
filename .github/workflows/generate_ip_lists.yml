@@ -15,22 +15,38 @@ jobs:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      - name: Check if already generated today
+      - name: Check if already generated recently
         id: check_generated
         run: |
           COUNTRY="${{ github.event.client_payload.country }}"
-          TODAY=$(date +%Y-%m-%d)
           
           # 检查元数据文件是否存在
           METADATA_FILE="ip-lists/${COUNTRY}_metadata.json"
           if [ -f "$METADATA_FILE" ]; then
-            # 获取上次生成日期
-            LAST_GENERATED=$(grep -o '"generated_at":"[^"]*"' "$METADATA_FILE" | cut -d'"' -f4 | cut -d'T' -f1)
+            # 获取上次生成日期和时间
+            LAST_GENERATED=$(grep -o '"generated_at":"[^"]*"' "$METADATA_FILE" | cut -d'"' -f4)
             
-            if [ "$LAST_GENERATED" == "$TODAY" ]; then
-              echo "已经在今天生成过 $COUNTRY 的 IP 列表"
+            # 计算上次生成时间到现在的小时数
+            LAST_TIMESTAMP=$(date -d "$LAST_GENERATED" +%s)
+            CURRENT_TIMESTAMP=$(date +%s)
+            HOURS_DIFF=$(( (CURRENT_TIMESTAMP - LAST_TIMESTAMP) / 3600 ))
+            
+            if [ $HOURS_DIFF -lt 24 ]; then
+              echo "已经在最近24小时内生成过 $COUNTRY 的 IP 列表，上次生成时间: $LAST_GENERATED"
               echo "skip=true" >> $GITHUB_OUTPUT
+              
+              # 获取现有文件的URL
+              IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
+              
+              # 如果Worker URL在环境变量中存在，则通知Worker
+              if [ ! -z "${{ secrets.WORKER_URL }}" ]; then
+                echo "通知Worker使用现有URL"
+                curl -X GET "${{ secrets.WORKER_URL }}?generated_url=${IPV4_URL}&country_code=${COUNTRY}"
+              fi
+              
               exit 0
+            else
+              echo "上次生成时间超过24小时，将重新生成"
             fi
           fi
           
@@ -143,8 +159,28 @@ jobs:
 
       - name: Commit and push if changed
         if: steps.check_generated.outputs.skip != 'true'
+        id: commit_push
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add ip-lists/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update IP lists for ${{ github.event.client_payload.country }}" && git push) 
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Update IP lists for ${{ github.event.client_payload.country }}"
+            git push
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify Worker
+        if: steps.check_generated.outputs.skip != 'true' && steps.commit_push.outputs.changes == 'true'
+        run: |
+          COUNTRY="${{ github.event.client_payload.country }}"
+          # 构建IPv4文件的URL
+          IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
+          
+          # 通知Worker
+          if [ ! -z "${{ secrets.WORKER_URL }}" ]; then
+            curl -X GET "${{ secrets.WORKER_URL }}?generated_url=${IPV4_URL}&country_code=${COUNTRY}"
+          fi 
