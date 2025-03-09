@@ -44,28 +44,7 @@ jobs:
               echo "最近24小时内已经生成过 $COUNTRY 的IP列表，上次生成时间: $LAST_REQUEST"
               echo "need_update=false" >> $GITHUB_OUTPUT
               
-              # 更新请求状态为跳过
-              TEMP_FILE=$(mktemp)
-              jq --arg country "$COUNTRY" \
-                 --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-                 --arg run_id "${{ github.run_id }}" \
-                 --arg message "24小时内已生成" \
-              '[{
-                "country": $country,
-                "status": "skipped",
-                "created_at": $time,
-                "updated_at": $time,
-                "run_id": $run_id,
-                "message": $message
-              }] + .[0:99]' "$REQUESTS_FILE" > "$TEMP_FILE"
-              mv "$TEMP_FILE" "$REQUESTS_FILE"
-              
-              git config --global user.name 'GitHub Actions'
-              git config --global user.email 'actions@github.com'
-              git add "$REQUESTS_FILE"
-              git commit -m "Skip generation for $COUNTRY (generated within 24h)"
-              git push
-              
+              # 不添加新记录，保持原有记录
               exit 0
             fi
           fi
@@ -78,17 +57,17 @@ jobs:
           COUNTRY="${{ github.event.client_payload.country }}"
           REQUESTS_FILE="geoip-info/requests.json"
           
-          # 添加新的请求记录
+          # 添加新的请求记录，并保留最近的100条记录
           TEMP_FILE=$(mktemp)
           jq --arg country "$COUNTRY" \
              --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
              --arg run_id "${{ github.run_id }}" \
           '[{
-            "country": $country,
-            "status": "processing",
-            "created_at": $time,
-            "updated_at": $time,
-            "run_id": $run_id
+            "国家": $country,
+            "状态": "处理中",
+            "创建时间": $time,
+            "更新时间": $time,
+            "运行ID": $run_id
           }] + .[0:99]' "$REQUESTS_FILE" > "$TEMP_FILE"
           mv "$TEMP_FILE" "$REQUESTS_FILE"
           
@@ -258,11 +237,11 @@ jobs:
              --arg status "$REQUEST_STATUS" \
              --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
              --arg message "$MESSAGE" \
-          '.[0] = if .[0].country == $country then
+          '.[0] = if .[0].国家 == $country then
             .[0] + {
-              "status": $status,
-              "updated_at": $time,
-              "message": $message
+              "状态": $status,
+              "更新时间": $time,
+              "消息": $message
             }
           else . end' "geoip-info/requests.json" > temp.json && mv temp.json "geoip-info/requests.json"
           
