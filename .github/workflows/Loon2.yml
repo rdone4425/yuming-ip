@@ -1,35 +1,4 @@
-Skip to content
-Navigation Menu
-rdone4425
-ios_rule_script
-
-Type / to search
-Code
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-Settings
-ios_rule_script/.github/workflows
-/Loon.yml
-Go to file
-t
-rdone4425
-rdone4425
-Create Loon.yml
-859edf4
- · 
-17 hours ago
-ios_rule_script/ .github/ 工作流程
-/ 工资表
-
-代码
-
-责备
-110 行 (90 位置) · 4.23 KB
-name: 更新Loon域名规则
+name: Update Loon Domain Rules
 
 on:
   schedule:
@@ -43,97 +12,97 @@ jobs:
       contents: write
     
     steps:
-    - name: 签出仓库
+    - name: Checkout repository
       uses: actions/checkout@v2
       with:
         token: ${{ secrets.PAT }}
         
-    - name: 设置Python
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
         
-    - name: 安装依赖
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests
         
-    - name: 创建更新脚本
+    - name: Create update script
       run: |
         cat > extract_domains.py << 'EOF'
-import requests
-from datetime import datetime
-import os
+        import requests
+        from datetime import datetime
+        import os
 
-def extract_domains():
-    # 获取目录列表
-    directory_url = "https://raw.githubusercontent.com/rdone4425/yuming-ip/main/yuming-ip/loon.txt"
-    try:
-        response = requests.get(directory_url)
-        response.raise_for_status()
-        directories = response.text.strip().split('\n')
-                
-        base_url = "https://raw.githubusercontent.com/rdone4425/ios_rule_script/master/rule/Loon"
-        all_domains = set()
-                
-        for directory in directories:
+        def extract_domains():
+            # 获取目录列表
+            directory_url = "https://raw.githubusercontent.com/rdone4425/yuming-ip/main/yuming-ip/loon.txt"
             try:
-                # 构建规则文件URL
-                rule_url = f"{base_url}/{directory}/{directory}.list"
-                response = requests.get(rule_url)
+                response = requests.get(directory_url)
                 response.raise_for_status()
-                content = response.text.split('\n')
+                directories = response.text.strip().split('\n')
                 
-                # 提取域名
-                for line in content:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
+                base_url = "https://raw.githubusercontent.com/rdone4425/ios_rule_script/master/rule/Loon"
+                all_domains = set()
+                
+                for directory in directories:
+                    try:
+                        # 构建规则文件URL
+                        rule_url = f"{base_url}/{directory}/{directory}.list"
+                        response = requests.get(rule_url)
+                        response.raise_for_status()
+                        content = response.text.split('\n')
                         
-                    # 处理不同类型的规则
-                    if 'DOMAIN,' in line:
-                        domain = line.split('DOMAIN,')[1].strip()
-                        all_domains.add(f"DOMAIN,{domain}")
-                    elif 'DOMAIN-SUFFIX,' in line:
-                        domain = line.split('DOMAIN-SUFFIX,')[1].strip()
-                        all_domains.add(f"DOMAIN-SUFFIX,{domain}")
-                    elif 'DOMAIN-KEYWORD,' in line:
-                        keyword = line.split('DOMAIN-KEYWORD,')[1].strip()
-                        all_domains.add(f"DOMAIN-KEYWORD,{keyword}")
+                        # 提取域名
+                        for line in content:
+                            line = line.strip()
+                            if not line or line.startswith('#'):
+                                continue
+                                
+                            # 处理不同类型的规则
+                            if 'DOMAIN,' in line:
+                                domain = line.split('DOMAIN,')[1].strip()
+                                all_domains.add(f"DOMAIN,{domain}")
+                            elif 'DOMAIN-SUFFIX,' in line:
+                                domain = line.split('DOMAIN-SUFFIX,')[1].strip()
+                                all_domains.add(f"DOMAIN-SUFFIX,{domain}")
+                            elif 'DOMAIN-KEYWORD,' in line:
+                                keyword = line.split('DOMAIN-KEYWORD,')[1].strip()
+                                all_domains.add(f"DOMAIN-KEYWORD,{keyword}")
+                        
+                        print(f"Processed {directory}")
+                        
+                    except Exception as e:
+                        print(f"Error processing {directory}: {e}")
+                        continue
                 
-                print(f"Processed {directory}")
+                # 创建输出目录
+                os.makedirs('ios_rule_script', exist_ok=True)
+                
+                # 保存所有域名到文件，保持原始规则格式
+                with open('ios_rule_script/merged_domains.list', 'w', encoding='utf-8') as f:
+                    # 添加文件头部信息
+                    f.write(f"# 合并时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write(f"# 总规则数: {len(all_domains)}\n\n")
+                    for domain in sorted(all_domains):
+                        f.write(f"{domain}\n")
+                
+                print(f"Total unique domains extracted: {len(all_domains)}")
+                return True
                 
             except Exception as e:
-                print(f"Error processing {directory}: {e}")
-                continue
+                print(f"Error: {e}")
+                return False
         
-        # 创建输出目录
-        os.makedirs('ios_rule_script', exist_ok=True)
+        if __name__ == "__main__":
+            success = extract_domains()
+            exit(0 if success else 1)
+        EOF
         
-        # 保存所有域名到文件，保持原始规则格式
-        with open('ios_rule_script/merged_domains.list', 'w', encoding='utf-8') as f:
-            # 添加文件头部信息
-            f.write(f"# 合并时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"# 总规则数: {len(all_domains)}\n\n")
-            for domain in sorted(all_domains):
-                f.write(f"{domain}\n")
-        
-        print(f"Total unique domains extracted: {len(all_domains)}")
-        return True
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-if __name__ == "__main__":
-    success = extract_domains()
-    exit(0 if success else 1)
-EOF
-        
-    - name: 运行更新脚本
+    - name: Run update script
       run: python extract_domains.py
         
-    - name: 提交并推送更改
+    - name: Commit and push if changed
       run: |
         git config --local user.name "GitHub Action"
         git config --local user.email "action@github.com"
