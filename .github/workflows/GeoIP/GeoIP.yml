@@ -1,0 +1,63 @@
+name: Generate GeoIP Info JSON
+
+on:
+  workflow_dispatch:  # 手动触发
+  schedule:
+    - cron: '0 0 * * *'  # 每天运行一次
+
+jobs:
+  generate-json:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout meta-rules-dat repository
+        uses: actions/checkout@v4
+        with:
+          repository: rdone4425/meta-rules-dat
+          ref: meta
+          path: meta-rules-dat
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Generate geoip_info.json
+        run: |
+          python3 << EOF
+          import os
+          import json
+          
+          # 创建新目录
+          os.makedirs('geoip-info', exist_ok=True)
+          
+          geoip_list = []
+          base_url = "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo/geoip"
+          
+          # 扫描目录下的所有.list文件
+          for file in os.listdir('./meta-rules-dat/geo/geoip'):
+              if file.endswith('.list'):
+                  country_code = file[:-5]  # 去掉.list后缀
+                  geoip_list.append({
+                      "代码": country_code,
+                      "文件": file,
+                      "链接": f"{base_url}/{file}"
+                  })
+          
+          # 按代码字母顺序排序
+          geoip_list.sort(key=lambda x: x["代码"])
+          
+          # 写入JSON文件到新目录
+          with open('geoip-info/geoip_info.json', 'w', encoding='utf-8') as f:
+              json.dump(geoip_list, f, ensure_ascii=False, indent=2)
+          EOF
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add geoip-info/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update geoip_info.json" && git push)
