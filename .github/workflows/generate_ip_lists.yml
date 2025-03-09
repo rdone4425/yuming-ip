@@ -246,14 +246,19 @@ jobs:
              --arg status "$REQUEST_STATUS" \
              --arg time "$CURRENT_TIME" \
              --arg message "$MESSAGE" \
-          '.[0] = if .[0].国家 == $country then
-            .[0] + {
+          'map(if .国家 == $country and index == 0 then
+            . + {
               "状态": $status,
               "更新时间": $time,
               "消息": $message
             }
-          else . end' "geoip-info/requests.json" > temp.json && mv temp.json "geoip-info/requests.json"
+          else . end)' "geoip-info/requests.json" > temp.json && mv temp.json "geoip-info/requests.json"
           
-          git add "geoip-info/requests.json"
-          git commit -m "Update final status for $COUNTRY"
-          git push
+          if [ $? -eq 0 ]; then
+            git add "geoip-info/requests.json"
+            git commit -m "Update final status for $COUNTRY"
+            git push
+          else
+            echo "Error updating status in requests.json"
+            exit 1
+          fi
