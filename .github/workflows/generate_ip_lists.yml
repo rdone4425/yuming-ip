@@ -1,0 +1,71 @@
+name: Generate GeoIP Info JSON
+
+# 明确设置权限
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:  # 手动触发
+  schedule:
+    - cron: '0 0 * * *'  # 每天运行一次
+
+jobs:
+  generate-json:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          fetch-depth: 0
+
+      - name: Checkout meta-rules-dat repository
+        uses: actions/checkout@v4
+        with:
+          repository: rdone4425/meta-rules-dat
+          ref: meta
+          path: meta-rules-dat
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Generate geoip_info.json
+        run: |
+          python3 << EOF
+          import os
+          import json
+          
+          # 创建新目录
+          os.makedirs('geoip-info', exist_ok=True)
+          
+          geoip_list = []
+          base_url = "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo/geoip"
+          
+          # 扫描目录下的所有.list文件
+          for file in os.listdir('./meta-rules-dat/geo/geoip'):
+              if file.endswith('.list'):
+                  country_code = file[:-5]  # 去掉.list后缀
+                  geoip_list.append({
+                      "代码": country_code,
+                      "文件": file,
+                      "链接": f"{base_url}/{file}"
+                  })
+          
+          # 按代码字母顺序排序
+          geoip_list.sort(key=lambda x: x["代码"])
+          
+          # 写入JSON文件到新目录
+          with open('geoip-info/geoip_info.json', 'w', encoding='utf-8') as f:
+              json.dump(geoip_list, f, ensure_ascii=False, indent=2)
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add geoip-info/
+          git commit -m "Update geoip_info.json" || echo "No changes to commit"
+          git push https://${{ secrets.PAT }}@github.com/rdone4425/yuming-ip.git HEAD:${{ github.ref_name }}
