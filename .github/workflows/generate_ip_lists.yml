@@ -38,10 +38,13 @@ jobs:
               # 获取现有文件的URL
               IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
               
-              # 如果Worker URL在环境变量中存在，则通知Worker
-              if [ ! -z "${{ secrets.WORKER_URL }}" ]; then
+              # 如果回调URL在环境变量中存在，则通知Worker
+              if [ ! -z "${{ github.event.client_payload.callback_url }}" ]; then
                 echo "通知Worker使用现有URL"
-                curl -X GET "${{ secrets.WORKER_URL }}?generated_url=${IPV4_URL}&country_code=${COUNTRY}"
+                CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&url=${IPV4_URL}"
+                echo "调用回调URL: $CALLBACK_URL"
+                RESPONSE=$(curl -X GET "$CALLBACK_URL")
+                echo "回调响应: $RESPONSE"
               fi
               
               exit 0
@@ -181,6 +184,10 @@ jobs:
           IPV4_URL="https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ip-lists/${COUNTRY}_ipv4.txt"
           
           # 通知Worker
-          if [ ! -z "${{ secrets.WORKER_URL }}" ]; then
-            curl -X GET "${{ secrets.WORKER_URL }}?generated_url=${IPV4_URL}&country_code=${COUNTRY}"
+          if [ ! -z "${{ github.event.client_payload.callback_url }}" ]; then
+            echo "通知Worker使用新生成的URL"
+            CALLBACK_URL="${{ github.event.client_payload.callback_url }}?callback=github_action&country=${COUNTRY}&url=${IPV4_URL}"
+            echo "调用回调URL: $CALLBACK_URL"
+            RESPONSE=$(curl -X GET "$CALLBACK_URL")
+            echo "回调响应: $RESPONSE"
           fi 
