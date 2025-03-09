@@ -2,6 +2,14 @@
   {
     "country": "AD",
     "status": "skipped",
+    "created_at": "2025-03-09T07:59:41Z",
+    "updated_at": "2025-03-09T07:59:41Z",
+    "run_id": "13746328094",
+    "message": "24小时内已生成"
+  },
+  {
+    "country": "AD",
+    "status": "skipped",
     "created_at": "2025-03-09T07:50:17Z",
     "updated_at": "2025-03-09T07:50:17Z",
     "run_id": "13746279355",
