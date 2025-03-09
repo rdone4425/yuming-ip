@@ -320,12 +320,28 @@ jobs:
         
     - name: Commit and push results
       run: |
+        # 确保我们在一个有效的 git 仓库中
+        if [ ! -d .git ]; then
+          git init
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+        fi
+        
         git config --local user.name "GitHub Action"
         git config --local user.email "action@github.com"
-        # 先拉取最新的远程更改
-        git pull --rebase origin master
+        
+        # 创建新分支（如果需要）
+        git checkout -b main || git checkout main
+        
+        # 添加和提交更改
         git add ios_rule_script/GeoLite2-Country.mmdb
         git add ios_rule_script/dns_results_ipv4.txt
         git add ios_rule_script/dns_results_ipv6.txt
         git add ios_rule_script/dns_results_cname.txt
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update DNS lookup results and GeoIP database $(date '+%Y-%m-%d %H:%M:%S')" && git push) 
+        
+        # 提交更改（如果有的话）
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update DNS lookup results and GeoIP database $(date '+%Y-%m-%d %H:%M:%S')"
+          git push -u origin main
+        fi 
