@@ -1,28 +1,97 @@
-name: Filter Non-China IPs
-description: Filter out China IPs (IPv4 and IPv6) from DNS results
+name: Filter China IPs
 
-# 输入文件配置
-input:
-  ipv4:
-    source: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv4.txt
-    format: txt
-  ipv6:
-    source: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv6.txt
-    format: txt
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天运行一次
+  workflow_dispatch:      # 允许手动触发
 
-# IP 过滤配置  
-filter:
-  ip2region:
-    database: ip2region.xdb
-    exclude_region: "中国|CN|China"
+jobs:
+  filter:
+    runs-on: ubuntu-latest
     
-# 输出配置
-output:
-  format: txt
-  ipv4_file: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv4.txt
-  ipv6_file: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv6.txt
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install geoip2 requests pyyaml
+    
+    - name: Download GeoIP2 Database
+      run: |
+        wget https://cdn.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb
+    
+    - name: Download IP Lists
+      run: |
+        wget -O dns_results_ipv4.txt https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ios_rule_script/dns_results_ipv4.txt
+        wget -O dns_results_ipv6.txt https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ios_rule_script/dns_results_ipv6.txt
 
-# 日志配置
-logging:
-  level: info
-  file: filter.log
+    - name: Create Python Script
+      run: |
+        cat > filter_ip.py << 'EOL'
+        import geoip2.database
+        import yaml
+        import logging
+        from pathlib import Path
+
+        def setup_logging(config):
+            logging.basicConfig(
+                level=getattr(logging, config['logging']['level'].upper()),
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                filename=config['logging']['file']
+            )
+
+        def filter_ips(input_file, output_file, reader):
+            with open(input_file, 'r') as f:
+                ips = f.read().splitlines()
+            
+            filtered_ips = []
+            for ip in ips:
+                try:
+                    response = reader.country(ip)
+                    if response.country.iso_code != 'CN':
+                        filtered_ips.append(ip)
+                except Exception as e:
+                    logging.warning(f"Could not process IP {ip}: {str(e)}")
+                    filtered_ips.append(ip)  # 如果无法确定IP归属，保留该IP
+            
+            with open(output_file, 'w') as f:
+                f.write('\n'.join(filtered_ips))
+            
+            logging.info(f"Filtered {len(ips) - len(filtered_ips)} IPs from {input_file}")
+
+        def main():
+            with open('config.yml', 'r') as f:
+                config = yaml.safe_load(f)
+            
+            setup_logging(config)
+            
+            reader = geoip2.database.Reader(config['filter']['geoip2']['database'])
+            
+            filter_ips(config['input']['ipv4']['source'], 
+                      config['output']['ipv4_file'], reader)
+            
+            filter_ips(config['input']['ipv6']['source'], 
+                      config['output']['ipv6_file'], reader)
+            
+            reader.close()
+
+        if __name__ == '__main__':
+            main()
+        EOL
+
+    - name: Run Filter Script
+      run: python filter_ip.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add filtered_ipv4.txt filtered_ipv6.txt filter.log
+        git commit -m "Update filtered IP lists" || echo "No changes to commit"
+        git push 
