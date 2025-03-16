@@ -94,4 +94,4 @@ jobs:
         git config --global user.email 'action@github.com'
         git add filtered_ipv4.txt filtered_ipv6.txt filter.log
         git commit -m "Update filtered IP lists" || echo "No changes to commit"
-        git push 
+        git push "https://${{ secrets.PAT }}@github.com/${GITHUB_REPOSITORY}.git" 
