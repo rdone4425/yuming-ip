@@ -24,6 +24,13 @@ jobs:
           mkdir -p ip_backup
           curl -o ip_backup/merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
           
+      - name: Remove #cn IPs
+        run: |
+          # 创建一个不包含 #cn 标记的新文件
+          grep -v "#cn" ip_backup/merged_all.txt > ip_backup/merged_without_cn.txt
+          # 替换原文件
+          mv ip_backup/merged_without_cn.txt ip_backup/merged_all.txt
+          
       - name: Commit and push if changed
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}  # 使用 PAT token
