@@ -1,0 +1,28 @@
+name: Filter Non-China IPs
+description: Filter out China IPs (IPv4 and IPv6) from DNS results
+
+# 输入文件配置
+input:
+  ipv4:
+    source: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv4.txt
+    format: txt
+  ipv6:
+    source: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv6.txt
+    format: txt
+
+# IP 过滤配置  
+filter:
+  ip2region:
+    database: ip2region.xdb
+    exclude_region: "中国|CN|China"
+    
+# 输出配置
+output:
+  format: txt
+  ipv4_file: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv4.txt
+  ipv6_file: https://github.com/rdone4425/yuming-ip/blob/main/ios_rule_script/dns_results_ipv6.txt
+
+# 日志配置
+logging:
+  level: info
+  file: filter.log
