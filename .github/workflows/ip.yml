@@ -1,5 +1,8 @@
 name: Update IP List
 
+permissions:
+  contents: write  # 添加写入权限
+
 on:
   schedule:
     - cron: '0 0 * * *'  # 每天运行一次
@@ -11,16 +14,24 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}  # 使用 PAT token
+          fetch-depth: 0
         
       - name: Download IP list
         run: |
-          curl -o merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
+          mkdir -p ip_backup
+          curl -o ip_backup/merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
           
       - name: Commit and push if changed
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}  # 使用 PAT token
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          git add merged_all.txt
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update IP list $(date '+%Y-%m-%d')" && git push)
+          git add ip_backup/
+          git commit -m "更新 IP 列表" || echo "没有要提交的更改"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git push origin HEAD:${GITHUB_REF_NAME}
