@@ -1,0 +1,28 @@
+name: Filter Non-China IPs
+description: Filter out China IPs (IPv4 and IPv6) from DNS results
+
+# 输入文件配置
+input:
+  ipv4:
+    source: dns_results_ipv4.txt
+    format: txt
+  ipv6:
+    source: dns_results_ipv6.txt
+    format: txt
+
+# IP 过滤配置  
+filter:
+  geoip2:
+    database: Country.mmdb
+    exclude_region: "CN"
+    
+# 输出配置
+output:
+  format: txt
+  ipv4_file: filtered_ipv4.txt
+  ipv6_file: filtered_ipv6.txt
+
+# 日志配置
+logging:
+  level: info
+  file: filter.log 
