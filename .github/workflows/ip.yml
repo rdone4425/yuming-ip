@@ -1,0 +1,26 @@
+name: Update IP List
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天运行一次
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  update-ip:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Download IP list
+        run: |
+          curl -o merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
+          
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add merged_all.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update IP list $(date '+%Y-%m-%d')" && git push)
