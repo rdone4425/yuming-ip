@@ -38,11 +38,10 @@ jobs:
       run: |
         curl -o speedtest/ip.txt https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ios_rule_script/dns_results_ipv4.txt
 
-    - name: Build and Run Speed Test
+    - name: Run Speed Test
       working-directory: ./speedtest
       run: |
-        go build -o speedtest
-        ./speedtest
+        go run main.go
 
     - name: Move Results
       run: |
