@@ -25,16 +25,19 @@ type Progress struct {
 	success int32
 }
 
-func (p *Progress) Print() {
-	current := atomic.LoadInt32(&p.current)
-	total := atomic.LoadInt32(&p.total)
-	success := atomic.LoadInt32(&p.success)
-	
+func NewProgress(total int32) *Progress {
+	return &Progress{
+		total: total,
+	}
+}
+
+func (p *Progress) Update() {
+	atomic.AddInt32(&p.current, 1)
 	fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d", 
-		float64(current)/float64(total)*100, 
-		current, 
-		total,
-		success,
+		float64(atomic.LoadInt32(&p.current))/float64(p.total)*100,
+		atomic.LoadInt32(&p.current),
+		p.total,
+		atomic.LoadInt32(&p.success),
 	)
 }
 
@@ -105,8 +108,7 @@ func main() {
 	var wg sync.WaitGroup
 	
 	// 创建进度统计
-	progress := Progress{}
-	progress.total = int32(len(ips))
+	progress := NewProgress(int32(len(ips)))
 
 	// 限制并发数
 	tokens := make(chan struct{}, 2000)
@@ -122,8 +124,7 @@ func main() {
 			defer func() {
 				<-tokens // 释放令牌
 				wg.Done()
-				atomic.AddInt32(&progress.current, 1)
-				progress.Print()
+				progress.Update()
 			}()
 
 			delay := testTLS(ip, time.Second)
