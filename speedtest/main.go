@@ -23,6 +23,7 @@ type Progress struct {
 	total    int32
 	current  int32
 	success  int32
+	lastCount int32
 	lastTime time.Time
 }
 
@@ -32,15 +33,20 @@ func (p *Progress) Print() {
 	success := atomic.LoadInt32(&p.success)
 	
 	now := time.Now()
-	speed := float64(current-p.lastTime.Second()) / now.Sub(p.lastTime).Seconds()
-	
-	fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d 速度: %.1f IP/s", 
-		float64(current)/float64(total)*100, 
-		current, 
-		total,
-		success,
-		speed,
-	)
+	duration := now.Sub(p.lastTime).Seconds()
+	if duration >= 1 { // 每秒更新一次速度
+		speed := float64(current - p.lastCount) / duration
+		p.lastCount = current
+		p.lastTime = now
+		
+		fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d 速度: %.1f IP/s", 
+			float64(current)/float64(total)*100, 
+			current, 
+			total,
+			success,
+			speed,
+		)
+	}
 }
 
 // 测试单个IP的TLS连接
@@ -111,8 +117,9 @@ func main() {
 	
 	// 创建进度统计
 	progress := &Progress{
-		total:    int32(len(ips)),
-		lastTime: time.Now(),
+		total:     int32(len(ips)),
+		lastCount: 0,
+		lastTime:  time.Now(),
 	}
 
 	// 限制并发数
