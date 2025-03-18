@@ -30,6 +30,32 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests pyinstaller
 
+    - name: Create README
+      run: |
+        cat > README.md << 'EOF'
+        # WebScanner
+
+        快速扫描 HTTP/HTTPS 端口可用性检测工具。
+
+        ## 使用方法
+
+        ```bash
+        ./web_scanner -f ip.txt -t 50 -o 5 -d result
+        ```
+
+        ### 参数说明
+        - -f, --file: IP列表文件路径 (默认: ip.txt)
+        - -t, --threads: 线程数 (默认: 50)
+        - -o, --timeout: 超时时间(秒) (默认: 5)
+        - -d, --dir: 结果保存目录 (默认: result)
+
+        ## 输出文件
+        - http_available_[时间戳].txt: HTTP可用的IP
+        - https_available_[时间戳].txt: HTTPS可用的IP
+        - all_available_[时间戳].txt: 双协议都可用的IP
+        - full_results_[时间戳].json: 完整扫描结果
+        EOF
+
     - name: Build binary
       run: |
         pyinstaller --onefile \
@@ -55,4 +81,4 @@ jobs:
         draft: false
         prerelease: false
       env:
-        GITHUB_TOKEN: $ { secrets.PAT } 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
