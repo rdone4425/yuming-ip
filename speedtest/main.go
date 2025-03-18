@@ -20,11 +20,11 @@ type TestResult struct {
 
 // 进度统计
 type Progress struct {
-	total    int32
-	current  int32
-	success  int32
+	total     int32
+	current   int32
+	success   int32
 	lastCount int32
-	lastTime time.Time
+	lastTime  time.Time
 }
 
 func (p *Progress) Print() {
