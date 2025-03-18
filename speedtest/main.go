@@ -18,26 +18,18 @@ type TestResult struct {
 	Delay float64
 }
 
-// 进度统计
-type Progress struct {
+var (
 	total   int32
 	current int32
 	success int32
-}
+)
 
-func NewProgress(total int32) *Progress {
-	return &Progress{
-		total: total,
-	}
-}
-
-func (p *Progress) Update() {
-	atomic.AddInt32(&p.current, 1)
+func updateProgress() {
 	fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d", 
-		float64(atomic.LoadInt32(&p.current))/float64(p.total)*100,
-		atomic.LoadInt32(&p.current),
-		p.total,
-		atomic.LoadInt32(&p.success),
+		float64(atomic.LoadInt32(&current))/float64(total)*100,
+		atomic.LoadInt32(&current),
+		atomic.LoadInt32(&total),
+		atomic.LoadInt32(&success),
 	)
 }
 
@@ -107,15 +99,11 @@ func main() {
 	resultChan := make(chan TestResult, len(ips))
 	var wg sync.WaitGroup
 	
-	// 创建进度统计
-	progress := NewProgress(int32(len(ips)))
-
-	// 限制并发数
+	total = int32(len(ips))
 	tokens := make(chan struct{}, 2000)
-
-	// 开始测试
 	startTime := time.Now()
 
+	// 开始测试
 	for _, ip := range ips {
 		wg.Add(1)
 		tokens <- struct{}{} // 获取令牌
@@ -124,12 +112,13 @@ func main() {
 			defer func() {
 				<-tokens // 释放令牌
 				wg.Done()
-				progress.Update()
+				atomic.AddInt32(&current, 1)
+				updateProgress()
 			}()
 
 			delay := testTLS(ip, time.Second)
 			if delay > 0 {
-				atomic.AddInt32(&progress.success, 1)
+				atomic.AddInt32(&success, 1)
 				resultChan <- TestResult{IP: ip, Delay: delay}
 			}
 		}(ip)
