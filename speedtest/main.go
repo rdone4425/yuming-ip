@@ -20,39 +20,21 @@ type TestResult struct {
 
 // 进度统计
 type Progress struct {
-	total     int32
-	current   int32
-	success   int32
-	speed     float64
-	lastCheck time.Time
+	total   int32
+	current int32
+	success int32
 }
 
-func NewProgress(total int32) *Progress {
-	return &Progress{
-		total:     total,
-		lastCheck: time.Now(),
-	}
-}
-
-func (p *Progress) Update() {
+func (p *Progress) Print() {
 	current := atomic.LoadInt32(&p.current)
+	total := atomic.LoadInt32(&p.total)
 	success := atomic.LoadInt32(&p.success)
-	now := time.Now()
 	
-	// 计算速度
-	duration := now.Sub(p.lastCheck).Seconds()
-	if duration >= 1.0 {
-		p.speed = float64(current) / duration
-		p.lastCheck = now
-	}
-	
-	// 打印进度
-	fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d 速度: %.1f IP/s", 
-		float64(current)/float64(p.total)*100,
-		current,
-		p.total,
+	fmt.Printf("\r进度: %.1f%% (%d/%d) 可用: %d", 
+		float64(current)/float64(total)*100, 
+		current, 
+		total,
 		success,
-		p.speed,
 	)
 }
 
@@ -123,7 +105,8 @@ func main() {
 	var wg sync.WaitGroup
 	
 	// 创建进度统计
-	progress := NewProgress(int32(len(ips)))
+	progress := Progress{}
+	progress.total = int32(len(ips))
 
 	// 限制并发数
 	tokens := make(chan struct{}, 2000)
@@ -140,7 +123,7 @@ func main() {
 				<-tokens // 释放令牌
 				wg.Done()
 				atomic.AddInt32(&progress.current, 1)
-				progress.Update()
+				progress.Print()
 			}()
 
 			delay := testTLS(ip, time.Second)
