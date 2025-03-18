@@ -22,14 +22,31 @@ jobs:
       with:
         go-version: '1.21'
 
+    - name: Create speedtest directory
+      run: mkdir -p speedtest
+
+    - name: Move main.go to speedtest directory
+      run: mv main.go speedtest/ || echo "main.go already in correct location"
+
+    - name: Initialize Go Module
+      working-directory: ./speedtest
+      run: |
+        go mod init speedtest
+        go mod tidy
+
     - name: Download IP List
       run: |
-        curl -o ip.txt https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ios_rule_script/dns_results_ipv4.txt
+        curl -o speedtest/ip.txt https://raw.githubusercontent.com/rdone4425/yuming-ip/main/ios_rule_script/dns_results_ipv4.txt
 
     - name: Build and Run Speed Test
+      working-directory: ./speedtest
       run: |
         go build -o speedtest
         ./speedtest
+
+    - name: Move Results
+      run: |
+        mv speedtest/test_results.txt ./test_results.txt || echo "Results already in correct location"
 
     - name: Upload Results
       uses: actions/upload-artifact@v4
