@@ -12,10 +12,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8']
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: amd64
 
     steps:
     - uses: actions/checkout@v2
@@ -72,13 +68,9 @@ jobs:
         tar -czf web_scanner_linux_amd64.tar.gz web_scanner README.md
 
     - name: Create Release
-      id: create_release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: |
-          release/web_scanner_linux_amd64.tar.gz
-        draft: false
-        prerelease: false
+        files: release/web_scanner_linux_amd64.tar.gz
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        GITHUB_TOKEN: ${{ secrets.PAT }} 
