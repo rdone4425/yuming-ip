@@ -4,7 +4,7 @@ import os
 from urllib.parse import urlparse
 
 def get_files(rule_type):
-    """获取不同类型的规则文件并按文件名分类保存
+    """获取不同类型的规则文件并按目录分类保存
     
     Args:
         rule_type: 规则类型 ('asn', 'geo-geoip', 'geo-geosite', 'geo-lite-geoip', 'geo-lite-geosite')
@@ -54,53 +54,70 @@ def get_files(rule_type):
         response.raise_for_status()
         
         files = response.json()
-        file_data = {}
-        file_names = set()  # 用于收集所有文件名
+        all_rules = {}  # 用于存储所有规则
         
         if settings['group_files']:
-            # 按文件类型和名称分组
+            # 处理所有文件
             for file in files:
                 if file['type'] == 'dir':
                     continue
                     
                 download_url = file['download_url']
                 file_name = os.path.splitext(file['name'])[0]  # 去除扩展名
-                file_names.add(file_name)  # 添加到文件名集合
                 
-                # 确定文件类型
-                if file['name'].endswith('.list'):
-                    file_type = 'list_files'
-                elif file['name'].endswith('.mrs'):
-                    file_type = 'mrs_files'
-                elif file['name'].endswith('.yaml'):
-                    file_type = 'yaml_files'
-                else:
+                # 获取规则文件内容
+                try:
+                    rule_response = requests.get(download_url)
+                    rule_response.raise_for_status()
+                    rule_content = rule_response.text
+                    
+                    # 提取URL（以+.开头的行）
+                    urls = [line.strip()[2:] for line in rule_content.split('\n') 
+                           if line.strip().startswith('+.')]
+                    
+                    # 根据规则类型确定目录路径
+                    if 'geo-lite' in rule_type:
+                        directory = 'geo-lite'
+                        sub_type = rule_type.split('-')[-1]  # geoip 或 geosite
+                    else:
+                        directory = 'geo'
+                        sub_type = rule_type.split('-')[-1]  # geoip 或 geosite
+                    
+                    # 构建规则分类
+                    if directory not in all_rules:
+                        all_rules[directory] = {}
+                    if sub_type not in all_rules[directory]:
+                        all_rules[directory][sub_type] = {}
+                    
+                    # 保存规则内容
+                    all_rules[directory][sub_type][file_name] = sorted(urls)  # 排序URLs
+                    
+                except Exception as e:
+                    print(f"获取规则内容失败 {file_name}: {e}")
                     continue
-                
-                # 初始化文件类型字典
-                if file_type not in file_data:
-                    file_data[file_type] = {}
-                
-                # 将URL和目录名添加到对应的文件名分组中
-                if file_name not in file_data[file_type]:
-                    file_data[file_type][file_name] = {
-                        "urls": [],
-                        "directory": f"rules/{rule_type}/{file_name}"
-                    }
-                file_data[file_type][file_name]["urls"].append(download_url)
-                
-            # 对每个分组中的URL列表进行排序
-            for file_type in file_data:
-                if isinstance(file_data[file_type], dict):
-                    for file_name in file_data[file_type]:
-                        file_data[file_type][file_name]["urls"] = sorted(file_data[file_type][file_name]["urls"])
             
-            # 将数据写入JSON文件
-            output_path = os.path.join('rules', settings['output'])
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(file_data, f, indent=4, ensure_ascii=False)
-                
+            # 保存所有规则到一个JSON文件
+            all_rules_path = os.path.join('rules', 'all_rules.json')
+            os.makedirs(os.path.dirname(all_rules_path), exist_ok=True)
+            
+            # 如果文件已存在，先读取现有内容
+            if os.path.exists(all_rules_path):
+                with open(all_rules_path, 'r', encoding='utf-8') as f:
+                    existing_rules = json.load(f)
+                # 更新现有规则
+                for directory in all_rules:
+                    if directory not in existing_rules:
+                        existing_rules[directory] = {}
+                    for sub_type in all_rules[directory]:
+                        existing_rules[directory][sub_type] = all_rules[directory][sub_type]
+                all_rules = existing_rules
+            
+            # 保存更新后的规则
+            with open(all_rules_path, 'w', encoding='utf-8') as f:
+                json.dump(all_rules, f, indent=4, ensure_ascii=False)
+            
+            print(f"已更新规则到 all_rules.json: {rule_type}")
+            
         else:
             # ASN规则特殊处理
             asn_files = {}
@@ -109,7 +126,6 @@ def get_files(rule_type):
                 if (file['name'].startswith(settings.get('filter_start', '')) and 
                     (file['name'].endswith('.list') or file['name'].endswith('.mrs'))):
                     file_name = os.path.splitext(file['name'])[0]
-                    file_names.add(file_name)  # 添加到文件名集合
                     if file_name not in asn_files:
                         asn_files[file_name] = {
                             "urls": [],
@@ -117,23 +133,12 @@ def get_files(rule_type):
                         }
                     asn_files[file_name]["urls"].append(file['download_url'])
             
-            # 对每个ASN的URL列表进行排序
-            for asn in asn_files:
-                asn_files[asn]["urls"] = sorted(asn_files[asn]["urls"])
-            
             # 保存ASN文件列表
             output_path = os.path.join('rules', settings['output'])
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump({"asn_files": asn_files}, f, indent=4, ensure_ascii=False)
-        
-        # 创建包含所有文件名称的JSON文件
-        names_dir = 'rules_names'
-        os.makedirs(names_dir, exist_ok=True)
-        names_path = os.path.join(names_dir, f'{rule_type}_names.json')
-        with open(names_path, 'w', encoding='utf-8') as f:
-            json.dump({f"{rule_type}_names": sorted(list(file_names))}, f, indent=4, ensure_ascii=False)
-            
+
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
         return []
