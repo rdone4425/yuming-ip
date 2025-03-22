@@ -1,0 +1,224 @@
+{
+    "list_files": {
+        "apple": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/apple.list"
+            ],
+            "directory": "rules/geo-lite-geoip/apple"
+        },
+        "bilibili": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/bilibili.list"
+            ],
+            "directory": "rules/geo-lite-geoip/bilibili"
+        },
+        "cloudflare": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudflare.list"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudflare"
+        },
+        "cloudfront": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudfront.list"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudfront"
+        },
+        "cn": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cn.list"
+            ],
+            "directory": "rules/geo-lite-geoip/cn"
+        },
+        "facebook": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/facebook.list"
+            ],
+            "directory": "rules/geo-lite-geoip/facebook"
+        },
+        "google": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/google.list"
+            ],
+            "directory": "rules/geo-lite-geoip/google"
+        },
+        "jp": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/jp.list"
+            ],
+            "directory": "rules/geo-lite-geoip/jp"
+        },
+        "netflix": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/netflix.list"
+            ],
+            "directory": "rules/geo-lite-geoip/netflix"
+        },
+        "private": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/private.list"
+            ],
+            "directory": "rules/geo-lite-geoip/private"
+        },
+        "telegram": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/telegram.list"
+            ],
+            "directory": "rules/geo-lite-geoip/telegram"
+        },
+        "twitter": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/twitter.list"
+            ],
+            "directory": "rules/geo-lite-geoip/twitter"
+        }
+    },
+    "mrs_files": {
+        "apple": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/apple.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/apple"
+        },
+        "bilibili": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/bilibili.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/bilibili"
+        },
+        "cloudflare": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudflare.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudflare"
+        },
+        "cloudfront": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudfront.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudfront"
+        },
+        "cn": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cn.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/cn"
+        },
+        "facebook": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/facebook.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/facebook"
+        },
+        "google": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/google.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/google"
+        },
+        "jp": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/jp.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/jp"
+        },
+        "netflix": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/netflix.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/netflix"
+        },
+        "private": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/private.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/private"
+        },
+        "telegram": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/telegram.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/telegram"
+        },
+        "twitter": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/twitter.mrs"
+            ],
+            "directory": "rules/geo-lite-geoip/twitter"
+        }
+    },
+    "yaml_files": {
+        "apple": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/apple.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/apple"
+        },
+        "bilibili": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/bilibili.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/bilibili"
+        },
+        "cloudflare": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudflare.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudflare"
+        },
+        "cloudfront": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cloudfront.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/cloudfront"
+        },
+        "cn": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/cn.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/cn"
+        },
+        "facebook": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/facebook.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/facebook"
+        },
+        "google": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/google.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/google"
+        },
+        "jp": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/jp.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/jp"
+        },
+        "netflix": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/netflix.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/netflix"
+        },
+        "private": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/private.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/private"
+        },
+        "telegram": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/telegram.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/telegram"
+        },
+        "twitter": {
+            "urls": [
+                "https://raw.githubusercontent.com/rdone4425/meta-rules-dat/meta/geo-lite/geoip/twitter.yaml"
+            ],
+            "directory": "rules/geo-lite-geoip/twitter"
+        }
+    }
+}

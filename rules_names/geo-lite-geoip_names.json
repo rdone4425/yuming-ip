@@ -1,0 +1,16 @@
+{
+    "geo-lite-geoip_names": [
+        "apple",
+        "bilibili",
+        "cloudflare",
+        "cloudfront",
+        "cn",
+        "facebook",
+        "google",
+        "jp",
+        "netflix",
+        "private",
+        "telegram",
+        "twitter"
+    ]
+}
