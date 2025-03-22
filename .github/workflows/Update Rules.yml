@@ -1,8 +1,8 @@
-name: Update Rules
+name: Update IP List
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 每天 UTC 00:00 运行
+    - cron: '0 0 * * 0'  # 每周日UTC 00:00运行
   workflow_dispatch:      # 允许手动触发
 
 jobs:
@@ -10,12 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.PAT }}
+    - uses: actions/checkout@v3    # 更新到 v3
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v4  # 更新到 v4
       with:
         python-version: '3.x'
     
@@ -25,13 +23,17 @@ jobs:
         pip install requests
     
     - name: Run update script
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
-      run: python geo-ip.py
+      run: python 规则/geoip.py
     
-    - name: Commit and push if changes
+    - name: Commit changes
       run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add rules/ rules_names/
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update rules $(date '+%Y-%m-%d')" && git push) 
+        git add ip.json ip.txt
+        git commit -m "自动更新IP列表 $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.PAT }}
+        branch: ${{ github.ref }} 
