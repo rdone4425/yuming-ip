@@ -23,7 +23,6 @@ def fetch_ip_list():
         # 解析响应并写入TXT文件
         data = response.json()
         with open(txt_filename, 'w') as f:
-            f.write(f"# 更新时间: {current_time}\n")
             for proxy in data["proxies"]:
                 f.write(f"{proxy['ip']}\n")
                 
