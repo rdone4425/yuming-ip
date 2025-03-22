@@ -31,7 +31,7 @@ jobs:
       run: |
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git add ip.json ip.txt
+        git add yuming-ip/yuming-ip/ip.txt
         git commit -m "自动更新IP列表 $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
         git push origin HEAD:main
       env:
