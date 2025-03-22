@@ -19,26 +19,76 @@ jobs:
           token: ${{ secrets.PAT }}  # 使用 PAT token
           fetch-depth: 0
         
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install maxminddb-python
+          
       - name: Download IP list
         run: |
-          mkdir -p ip_backup
-          curl -o ip_backup/merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
+          mkdir -p ip
+          curl -o ip/merged_all.txt https://gitlab.com/rdone4425/ip/-/raw/main/ips/merged_all.txt
+          
+      - name: Process IPs
+        run: |
+          python - <<EOF
+          import maxminddb
+          import ipaddress
+          
+          def get_country_code(ip, reader):
+              try:
+                  result = reader.get(ip)
+                  if result and 'country' in result:
+                      return result['country']['iso_code']
+              except:
+                  pass
+              return None
+          
+          # 读取IP文件
+          with open('ip/merged_all.txt', 'r') as f:
+              lines = f.readlines()
+          
+          # 打开GeoLite2数据库
+          reader = maxminddb.open_database('ios_rule_script/GeoLite2-Country.mmdb')
+          
+          # 处理每一行
+          new_lines = []
+          for line in lines:
+              line = line.strip()
+              if '#' not in line and line:  # 如果行不为空且没有国家代码
+                  ip = line.split('/')[0]  # 获取IP地址
+                  country_code = get_country_code(ip, reader)
+                  if country_code:
+                      line = f"{line} #{country_code}"
+              new_lines.append(line)
+          
+          # 写回文件
+          with open('ip/merged_all.txt', 'w') as f:
+              f.write('\n'.join(new_lines))
+          
+          reader.close()
+          EOF
           
       - name: Remove #cn IPs
         run: |
           # 创建一个不包含 #CN 或 #cn 标记的新文件（不区分大小写）
-          grep -v -i "#cn" ip_backup/merged_all.txt > ip_backup/merged_without_cn.txt
+          grep -v -i "#cn" ip/merged_all.txt > ip/merged_without_cn.txt
           # 替换原文件
-          mv ip_backup/merged_without_cn.txt ip_backup/merged_all.txt
+          mv ip/merged_without_cn.txt ip/merged_all.txt
           
       - name: Commit and push if changed
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}  # 使用 PAT token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          git add ip_backup/
-          git commit -m "更新 IP 列表" || echo "没有要提交的更改"
+          git add ip/
+          git commit -m "更新 IP 列表并添加国家代码" || echo "没有要提交的更改"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push origin HEAD:${GITHUB_REF_NAME}
