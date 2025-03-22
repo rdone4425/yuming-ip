@@ -1,4 +1,4 @@
-name: IP List
+name: IP List1
 
 on:
   schedule:
