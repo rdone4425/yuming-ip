@@ -1,187 +1,57 @@
 import requests
 import json
-import os
-from urllib.parse import urlparse
+from datetime import datetime
 
-def get_files(rule_type):
-    """获取不同类型的规则文件并按文件名分类保存
+def fetch_ip_list():
+    # 添加时间戳记录
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"开始更新IP列表 - {current_time}")
     
-    Args:
-        rule_type: 规则类型 ('asn', 'geo-geoip', 'geo-geosite', 'geo-lite-geoip', 'geo-lite-geosite')
-    Returns:
-        dict: 返回处理后的文件数据
-    """
-    result_data = {}
-    
-    config = {
-        'asn': {
-            'path': 'asn',
-            'output': 'asn_files.json',
-            'filter_start': 'AS',
-            'group_files': False
-        },
-        'geo-geoip': {
-            'path': 'geo/geoip',
-            'output': 'geo_geoip_files.json',
-            'group_files': True
-        },
-        'geo-geosite': {
-            'path': 'geo/geosite',
-            'output': 'geo_geosite_files.json',
-            'group_files': True
-        },
-        'geo-lite-geoip': {
-            'path': 'geo-lite/geoip',
-            'output': 'geoip_files.json',
-            'group_files': True
-        },
-        'geo-lite-geosite': {
-            'path': 'geo-lite/geosite',
-            'output': 'geosite_files.json',
-            'group_files': True
-        }
-    }
-    
-    if rule_type not in config:
-        print(f"不支持的规则类型: {rule_type}")
-        return result_data
-        
-    settings = config[rule_type]
-    url = f"https://api.github.com/repos/rdone4425/meta-rules-dat/contents/{settings['path']}?ref=meta"
+    # 设置请求URL
+    url = "https://ip.rdone.me/list"
     
     try:
-        headers = {
-            'Accept': 'application/vnd.github.v3+json'
+        # 发送GET请求
+        response = requests.get(url)
+        response.raise_for_status()  # 检查请求是否成功
+        
+        # 解析JSON响应
+        data = response.json()
+        
+        # 提取IP和国家信息
+        simplified_data = {
+            "proxies": [
+                {
+                    "ip": proxy["ip"],
+                    "country": proxy["country"]
+                }
+                for proxy in data["proxies"]
+            ]
         }
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
         
-        files = response.json()
-        file_data = {}
-        file_names = set()  # 用于收集所有文件名
+        # 保存简化的JSON数据到固定文件名
+        json_filename = "ip.json"
+        with open(json_filename, 'w', encoding='utf-8') as f:
+            json.dump(simplified_data, f, ensure_ascii=False, indent=2)
+            
+        # 添加更新时间到TXT文件
+        txt_filename = "ip.txt"
+        with open(txt_filename, 'w') as f:
+            f.write(f"# 更新时间: {current_time}\n")
+            for proxy in simplified_data["proxies"]:
+                f.write(f"{proxy['ip']}\n")
+                
+        print(f"JSON数据已保存到: {json_filename}")
+        print(f"IP列表已保存到: {txt_filename}")
+        print(f"共 {len(simplified_data['proxies'])} 个IP地址")
+        print(f"更新完成 - {current_time}")
         
-        if settings['group_files']:
-            # 按文件类型和名称分组
-            for file in files:
-                if file['type'] == 'dir':
-                    continue
-                    
-                download_url = file['download_url']
-                file_name = os.path.splitext(file['name'])[0]  # 去除扩展名
-                file_names.add(file_name)  # 添加到文件名集合
-                
-                # 确定文件类型
-                if file['name'].endswith('.list'):
-                    file_type = 'list_files'
-                elif file['name'].endswith('.mrs'):
-                    file_type = 'mrs_files'
-                elif file['name'].endswith('.yaml'):
-                    file_type = 'yaml_files'
-                else:
-                    continue
-                
-                # 初始化文件类型字典
-                if file_type not in file_data:
-                    file_data[file_type] = {}
-                
-                # 将URL和目录名添加到对应的文件名分组中
-                if file_name not in file_data[file_type]:
-                    file_data[file_type][file_name] = {
-                        "urls": [],
-                        "directory": f"rules/{rule_type}/{file_name}"
-                    }
-                file_data[file_type][file_name]["urls"].append(download_url)
-                
-            # 对每个分组中的URL列表进行排序
-            for file_type in file_data:
-                if isinstance(file_data[file_type], dict):
-                    for file_name in file_data[file_type]:
-                        file_data[file_type][file_name]["urls"] = sorted(file_data[file_type][file_name]["urls"])
-            
-            # 将数据写入JSON文件
-            output_path = os.path.join('rules', settings['output'])
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(file_data, f, indent=4, ensure_ascii=False)
-            result_data = file_data  # 保存处理后的数据
-                
-        else:
-            # ASN规则特殊处理
-            asn_files = {}
-            
-            for file in files:
-                if (file['name'].startswith(settings.get('filter_start', '')) and 
-                    (file['name'].endswith('.list') or file['name'].endswith('.mrs'))):
-                    file_name = os.path.splitext(file['name'])[0]
-                    file_names.add(file_name)  # 添加到文件名集合
-                    if file_name not in asn_files:
-                        asn_files[file_name] = {
-                            "urls": [],
-                            "directory": f"rules/{rule_type}/{file_name}"
-                        }
-                    asn_files[file_name]["urls"].append(file['download_url'])
-            
-            # 对每个ASN的URL列表进行排序
-            for asn in asn_files:
-                asn_files[asn]["urls"] = sorted(asn_files[asn]["urls"])
-            
-            # 保存ASN文件列表
-            output_path = os.path.join('rules', settings['output'])
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            asn_data = {"asn_files": asn_files}
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(asn_data, f, indent=4, ensure_ascii=False)
-            result_data = asn_data  # 保存处理后的数据
-        
-        # 创建包含所有文件名称的JSON文件
-        names_dir = 'rules_names'
-        os.makedirs(names_dir, exist_ok=True)
-        names_path = os.path.join(names_dir, f'{rule_type}_names.json')
-        with open(names_path, 'w', encoding='utf-8') as f:
-            json.dump({f"{rule_type}_names": sorted(list(file_names))}, f, indent=4, ensure_ascii=False)
-            
-        return result_data  # 返回处理后的数据
-            
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return {}
-
-def create_all_names_json():
-    """创建一个包含所有类型规则名称的总JSON文件"""
-    all_names = {}
-    rule_types = ['asn', 'geo-geoip', 'geo-geosite', 'geo-lite-geoip', 'geo-lite-geosite']
-    names_dir = 'rules_names'
-    
-    for rule_type in rule_types:
-        names_path = os.path.join(names_dir, f'{rule_type}_names.json')
-        if os.path.exists(names_path):
-            with open(names_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                all_names.update(data)
-    
-    # 保存总的名称文件
-    with open(os.path.join(names_dir, 'all_names.json'), 'w', encoding='utf-8') as f:
-        json.dump(all_names, f, indent=4, ensure_ascii=False)
-
-def create_merged_rules_json():
-    """创建一个包含所有规则数据的合并JSON文件"""
-    merged_data = {}
-    rule_types = ['asn', 'geo-geoip', 'geo-geosite', 'geo-lite-geoip', 'geo-lite-geosite']
-    
-    for rule_type in rule_types:
-        data = get_files(rule_type)
-        if data:
-            merged_data[rule_type] = data
-    
-    # 保存合并后的文件
-    output_path = os.path.join('rules', 'merged_rules.json')
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(merged_data, f, indent=4, ensure_ascii=False)
+        print(f"下载失败: {e}")
+    except json.JSONDecodeError as e:
+        print(f"JSON解析失败: {e}")
+    except Exception as e:
+        print(f"发生错误: {e}")
 
 if __name__ == "__main__":
-    # 获取所有类型的规则文件并创建合并的JSON
-    create_merged_rules_json()
-    
-    # 创建总的名称文件
-    create_all_names_json()
+    fetch_ip_list()
