@@ -60,11 +60,20 @@ jobs:
           new_lines = []
           for line in lines:
               line = line.strip()
-              if '#' not in line and line:  # 如果行不为空且没有国家代码
-                  ip = line.split('/')[0]  # 获取IP地址
+              if not line:  # 跳过空行
+                  continue
+                  
+              if '#' not in line:  # 只处理没有国家代码的行
+                  # 处理IPv4和IPv6地址
+                  if '[' in line:  # IPv6
+                      ip = line.split(']')[0].strip('[]')  # 提取IPv6地址
+                  else:  # IPv4
+                      ip = line.split(':')[0]  # 提取IP地址（不含端口）
+                  
                   country_code = get_country_code(ip, reader)
                   if country_code:
-                      line = f"{line} #{country_code}"
+                      line = f"{line}#{country_code}"
+              
               new_lines.append(line)
           
           # 写回文件
