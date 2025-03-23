@@ -19,4 +19,4 @@ hostname = www.gstatic.com, cachefly.cachefly.net
 ^https?:\/\/(www.)?(g|google)matic.com\/generate_204 - reject
 
 [Panel]
-NodeSpeedTest = script-name=节点测速, title=节点测速, content=点击执行测速, update-interval=600 
+NodeSpeedTest = script-name=节点测速, title=节点测速, content=点击执行测速, update-interval=600
