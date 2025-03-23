@@ -1,6 +1,6 @@
 const $ = new Env("NodeSpeedTest");
-const tolerance = $.read("tolerance") || 100;
-const timecache = $.read("timecache") || 18000;
+const tolerance = 100;
+const timecache = 18000;
 
 // 主函数
 !(async () => {
