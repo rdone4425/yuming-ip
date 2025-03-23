@@ -1,76 +1,143 @@
-const $ = API("NodeSpeedTest");
+const $ = new Env("NodeSpeedTest");
 const tolerance = $.read("tolerance") || 100;
 const timecache = $.read("timecache") || 18000;
 
+// 主函数
 !(async () => {
-  // 获取所有节点
-  const proxies = await $.getProxies();
-  const results = [];
-  
-  for (let proxy of proxies) {
     try {
-      // 测试延迟
-      const delay = await testDelay(proxy);
-      
-      // 测试下载速度
-      const speed = await testSpeed(proxy);
-      
-      results.push({
-        name: proxy.name,
-        delay: delay,
-        speed: speed
-      });
+        // 获取所有策略组
+        const policyGroups = await $config.getSubPolicies();
+        const results = [];
+        let totalNodes = 0;
+        
+        // 遍历每个策略组获取节点
+        for (let group of policyGroups) {
+            const nodes = group.nodes;
+            totalNodes += nodes.length;
+            
+            $.notify("开始测速", "", `策略组: ${group.name}, 共 ${nodes.length} 个节点`);
+            
+            // 测试该组的所有节点
+            for (let node of nodes) {
+                try {
+                    // 测试延迟
+                    const delay = await testDelay(node);
+                    
+                    // 测试速度
+                    const speed = await testSpeed(node);
+                    
+                    results.push({
+                        group: group.name,
+                        node: node,
+                        delay: delay,
+                        speed: speed
+                    });
+                    
+                } catch (err) {
+                    console.log(`节点 ${node} 测试失败: ${err}`);
+                    results.push({
+                        group: group.name,
+                        node: node,
+                        delay: -1,
+                        speed: -1
+                    });
+                }
+                
+                // 每个节点测试间隔1秒
+                await sleep(1000);
+            }
+        }
+        
+        // 结果排序和显示
+        results.sort((a, b) => {
+            if (a.delay === -1) return 1;
+            if (b.delay === -1) return -1;
+            return a.delay - b.delay;
+        });
+        
+        // 生成报告
+        let report = "测速报告:\n\n";
+        let currentGroup = "";
+        
+        for (let result of results) {
+            if (currentGroup !== result.group) {
+                currentGroup = result.group;
+                report += `\n${currentGroup}:\n`;
+            }
+            
+            if (result.delay === -1) {
+                report += `${result.node}: 测试失败\n`;
+            } else {
+                report += `${result.node}: 延迟 ${result.delay}ms, 速度 ${result.speed.toFixed(2)}MB/s\n`;
+            }
+        }
+        
+        $.notify("测速完成", `共测试 ${totalNodes} 个节点`, report);
+        
     } catch (err) {
-      console.log(`测试节点 ${proxy.name} 时发生错误: ${err}`);
+        console.log("测速过程发生错误:", err);
+        $.notify("测速失败", "", err.toString());
     }
-  }
-  
-  // 排序并显示结果
-  results.sort((a, b) => a.delay - b.delay);
-  
-  let notification = "节点测速结果:\n";
-  results.forEach(result => {
-    notification += `${result.name}: 延迟 ${result.delay}ms, 速度 ${result.speed}MB/s\n`;
-  });
-  
-  $.notify("节点测速完成", "", notification);
 })();
 
-// 测试节点延迟
-async function testDelay(proxy) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    $.http.get({
-      url: "http://www.gstatic.com/generate_204",
-      proxy: proxy.name
-    })
-    .then(() => {
-      const delay = Date.now() - start;
-      resolve(delay);
-    })
-    .catch(err => reject(err));
-  });
+// 测试延迟
+async function testDelay(nodeName) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        $httpClient.get({
+            url: "http://www.gstatic.com/generate_204",
+            node: nodeName,
+            timeout: 3000
+        }, (error, response, data) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(Date.now() - startTime);
+            }
+        });
+    });
 }
 
-// 测试下载速度
-async function testSpeed(proxy) {
-  return new Promise((resolve, reject) => {
-    const testFile = "http://cachefly.cachefly.net/10mb.test";
-    const start = Date.now();
-    let downloaded = 0;
+// 测试速度
+async function testSpeed(nodeName) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        let downloaded = 0;
+        
+        $httpClient.get({
+            url: "http://cachefly.cachefly.net/10mb.test",
+            node: nodeName,
+            timeout: 5000,
+            onProgress: (written, total) => {
+                downloaded = written;
+                if ((Date.now() - startTime) > 5000) {
+                    resolve(downloaded / 1024 / 1024 / 5); // MB/s
+                }
+            }
+        }, (error, response, data) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(downloaded / 1024 / 1024 / ((Date.now() - startTime) / 1000));
+            }
+        });
+    });
+}
+
+// 工具函数
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Env 类
+function Env(name) {
+    this.name = name;
     
-    $.http.get({
-      url: testFile,
-      proxy: proxy.name,
-      onProgress: (written, total) => {
-        downloaded = written;
-        if (Date.now() - start > 5000) { // 5秒超时
-          resolve(downloaded / 1024 / 1024 / 5); // 转换为 MB/s
-        }
-      }
-    })
-    .catch(err => reject(err));
-  });
+    this.notify = (title, subtitle, message) => {
+        $notification.post(title, subtitle, message);
+    };
+    
+    return this;
 }
 
 // Loon API
