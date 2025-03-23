@@ -1,19 +1,27 @@
 // 节点测速脚本 for Sub-Store
 // 更新日期：2024-03-21
 
-function operator(proxies) {
+async function operator(proxies) {
     // 获取所有节点
-    const nodes = proxies.map(proxy => {
+    const nodes = await Promise.all(proxies.map(async proxy => {
         try {
             // 测试延迟
             const startTime = Date.now();
-            const response = $httpClient.get({
-                url: 'http://www.gstatic.com/generate_204',
-                timeout: 3000,
-                node: proxy.name
+            const response = await new Promise((resolve, reject) => {
+                $httpClient.get({
+                    url: 'http://www.gstatic.com/generate_204',
+                    timeout: 3000,
+                    node: proxy.name
+                }, (error, response) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(response);
+                    }
+                });
             });
             
-            const delay = response.error ? 0 : (Date.now() - startTime);
+            const delay = Date.now() - startTime;
             
             // 添加延迟标记
             if (delay > 0) {
@@ -27,7 +35,7 @@ function operator(proxies) {
         }
         
         return proxy;
-    });
+    }));
     
     // 按延迟排序
     return nodes.sort((a, b) => {
