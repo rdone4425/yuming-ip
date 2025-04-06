@@ -1,4 +1,4 @@
-name: Update IP List
+name: Update IP12 List
 
 on:
   schedule:
