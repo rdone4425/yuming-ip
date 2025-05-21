@@ -1,5 +1,5 @@
-# 合并时间: 2025-05-20 12:21:02
-# 总规则数: 20435
+# 合并时间: 2025-05-21 00:52:19
+# 总规则数: 20470
 
 DOMAIN,00713915daab0be43def5c338c02c80b.dlied1.cdntips.net
 DOMAIN,0123456789nonexistent.com
@@ -1519,6 +1519,7 @@ DOMAIN,security.cloudflare-dns.com
 DOMAIN,seeders-paradise.org
 DOMAIN,self.events.data.microsoft.com
 DOMAIN,servandroidkino.ru
+DOMAIN,servd-anthropic-website.b-cdn.net
 DOMAIN,services.bingapis.com
 DOMAIN,services.prod.ims.adobejanus.com
 DOMAIN,setmeup.arubanetworks.com
@@ -3394,6 +3395,8 @@ DOMAIN-SUFFIX,52yitian.com
 DOMAIN-SUFFIX,5566ua.com
 DOMAIN-SUFFIX,56.com
 DOMAIN-SUFFIX,56che.com
+DOMAIN-SUFFIX,56img.com
+DOMAIN-SUFFIX,56imgs.com
 DOMAIN-SUFFIX,56nb6oo06g.com
 DOMAIN-SUFFIX,57273vy9x0.com
 DOMAIN-SUFFIX,58.com
@@ -3748,6 +3751,25 @@ DOMAIN-SUFFIX,addthisedge.com
 DOMAIN-SUFFIX,addtoany.com
 DOMAIN-SUFFIX,adgoogle.net
 DOMAIN-SUFFIX,adguard.org
+DOMAIN-SUFFIX,adidas.at
+DOMAIN-SUFFIX,adidas.be
+DOMAIN-SUFFIX,adidas.ch
+DOMAIN-SUFFIX,adidas.co.in
+DOMAIN-SUFFIX,adidas.co.uk
+DOMAIN-SUFFIX,adidas.com
+DOMAIN-SUFFIX,adidas.com.cn
+DOMAIN-SUFFIX,adidas.com.sa
+DOMAIN-SUFFIX,adidas.com.tw
+DOMAIN-SUFFIX,adidas.cz
+DOMAIN-SUFFIX,adidas.de
+DOMAIN-SUFFIX,adidas.dk
+DOMAIN-SUFFIX,adidas.hu
+DOMAIN-SUFFIX,adidas.ie
+DOMAIN-SUFFIX,adidas.it
+DOMAIN-SUFFIX,adidas.nl
+DOMAIN-SUFFIX,adidas.pl
+DOMAIN-SUFFIX,adidas.ru
+DOMAIN-SUFFIX,adidas.se
 DOMAIN-SUFFIX,adimages.sina.com.hk
 DOMAIN-SUFFIX,adkwai.com
 DOMAIN-SUFFIX,adl163.com
@@ -3959,8 +3981,12 @@ DOMAIN-SUFFIX,aka.ms
 DOMAIN-SUFFIX,akabeesoft2.com
 DOMAIN-SUFFIX,akabeesoft3.com
 DOMAIN-SUFFIX,akadns.net
+DOMAIN-SUFFIX,akamai.com
 DOMAIN-SUFFIX,akamai.net
+DOMAIN-SUFFIX,akamaiedge.net
 DOMAIN-SUFFIX,akamaihd.net
+DOMAIN-SUFFIX,akamaistream.net
+DOMAIN-SUFFIX,akamaized.net
 DOMAIN-SUFFIX,akatsukiworks.com
 DOMAIN-SUFFIX,akuai.top
 DOMAIN-SUFFIX,albeats.com
@@ -4255,6 +4281,7 @@ DOMAIN-SUFFIX,antiy.cn
 DOMAIN-SUFFIX,antiy.com
 DOMAIN-SUFFIX,antiy.net.cn
 DOMAIN-SUFFIX,antiycloud.com
+DOMAIN-SUFFIX,antutu.com
 DOMAIN-SUFFIX,anxia.com
 DOMAIN-SUFFIX,anybox.com
 DOMAIN-SUFFIX,anydeskchina.cn
@@ -4262,11 +4289,13 @@ DOMAIN-SUFFIX,ao3yiqag7zc8za.com
 DOMAIN-SUFFIX,aod.itunes.apple.com
 DOMAIN-SUFFIX,aojiamarly.com
 DOMAIN-SUFFIX,aokwholesale.net
+DOMAIN-SUFFIX,aol.ca
 DOMAIN-SUFFIX,aol.co.uk
 DOMAIN-SUFFIX,aol.com
 DOMAIN-SUFFIX,aol.de
 DOMAIN-SUFFIX,aol.fr
 DOMAIN-SUFFIX,aolcdn.com
+DOMAIN-SUFFIX,aolnews.com
 DOMAIN-SUFFIX,aorus.com
 DOMAIN-SUFFIX,aoruszone.cn
 DOMAIN-SUFFIX,aos-incentive.huami.com
@@ -10914,6 +10943,8 @@ DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,ibyteimg.com
 DOMAIN-SUFFIX,ic.ac.uk
 DOMAIN-SUFFIX,icaing.cn
+DOMAIN-SUFFIX,icaneasy.com
+DOMAIN-SUFFIX,icanvideo.com
 DOMAIN-SUFFIX,icbc
 DOMAIN-SUFFIX,icbc-at.com
 DOMAIN-SUFFIX,icbc-cz.com
@@ -15597,6 +15628,7 @@ DOMAIN-SUFFIX,qeodns.com
 DOMAIN-SUFFIX,qeodns.net
 DOMAIN-SUFFIX,qeopzvgm.com
 DOMAIN-SUFFIX,qeyopxb.com
+DOMAIN-SUFFIX,qf.com.cn
 DOMAIN-SUFFIX,qftexpay.cn
 DOMAIN-SUFFIX,qg3oed7882.com
 DOMAIN-SUFFIX,qgadmin.qatp1.net
@@ -15631,6 +15663,7 @@ DOMAIN-SUFFIX,qhtui.com
 DOMAIN-SUFFIX,qhupdate.cn
 DOMAIN-SUFFIX,qhupdate.com
 DOMAIN-SUFFIX,qianchuanghr.com
+DOMAIN-SUFFIX,qianfan.tv
 DOMAIN-SUFFIX,qianqian.com
 DOMAIN-SUFFIX,qiantianchayuan.com
 DOMAIN-SUFFIX,qianxun.com
@@ -16659,6 +16692,7 @@ DOMAIN-SUFFIX,solarcity.com
 DOMAIN-SUFFIX,solocdn.cn
 DOMAIN-SUFFIX,solostudioksale.com
 DOMAIN-SUFFIX,solveforx.com
+DOMAIN-SUFFIX,somama.com
 DOMAIN-SUFFIX,sonatype.org
 DOMAIN-SUFFIX,sony-africa.com
 DOMAIN-SUFFIX,sony-asia.com
@@ -18282,6 +18316,7 @@ DOMAIN-SUFFIX,viacomcbspressexpress.com
 DOMAIN-SUFFIX,viber.co.jp
 DOMAIN-SUFFIX,viber.com
 DOMAIN-SUFFIX,viblast.com
+DOMAIN-SUFFIX,vicovico.com
 DOMAIN-SUFFIX,video-voip.com
 DOMAIN-SUFFIX,video.google.com
 DOMAIN-SUFFIX,video.qq.com
